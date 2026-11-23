@@ -1,6 +1,7 @@
 package com.openclassrooms.etudiant.service;
 
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -31,6 +32,27 @@ public class JwtService {
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(signingKey)
                 .compact();
+    }
+
+    /**
+     * Vérifie la signature et l'expiration du token, puis retourne le login (claim « sub »).
+     *
+     * @throws io.jsonwebtoken.JwtException si le token est invalide, falsifié ou expiré
+     */
+    public String extractUsername(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        return userDetails.getUsername().equals(extractUsername(token));
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
 }
