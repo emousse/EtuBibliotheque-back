@@ -24,6 +24,13 @@ logging:
       openclassrooms:
         etudiant: info
 
+jwt:
+  # Clé HMAC encodée en base64 (256 bits minimum pour HS256).
+  # Valeur de développement uniquement : en production, définir la variable JWT_SECRET.
+  secret: ${JWT_SECRET:4Cl6pC1OPRgV8CLlHWLthMiEUk5im6gpS6i5LZvJp9Y=}
+  # Durée de validité du token en millisecondes (1 heure par défaut).
+  expiration: ${JWT_EXPIRATION:3600000}
+
 management:
   endpoints:
     web:
