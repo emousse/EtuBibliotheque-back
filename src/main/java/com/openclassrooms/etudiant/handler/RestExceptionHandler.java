@@ -2,8 +2,10 @@ package com.openclassrooms.etudiant.handler;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -12,9 +14,26 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+
+    /**
+     * Erreurs de validation (@Valid) : renvoie un ErrorDetails listant les champs invalides,
+     * au lieu du message générique « Invalid request content ».
+     */
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
+                                                                  HttpHeaders headers, HttpStatusCode status,
+                                                                  WebRequest request) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), message, request.getDescription(false));
+        return handleExceptionInternal(exception, errorDetails, headers, HttpStatus.BAD_REQUEST, request);
+    }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(value = {IllegalArgumentException.class, IllegalStateException.class})
@@ -24,6 +43,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.BAD_REQUEST, request);
     }
 
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(value = {ResourceNotFoundException.class})
+    protected ResponseEntity<Object> handleNotFound(ResourceNotFoundException notFoundException, WebRequest request) {
+        logError(notFoundException);
+        return handleExceptionInternal(notFoundException, getErrorDetails(notFoundException, request),
+                new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+    }
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(value = {BadCredentialsException.class})
