@@ -1,6 +1,7 @@
 package com.openclassrooms.etudiant.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openclassrooms.etudiant.dto.LoginRequestDTO;
 import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.repository.UserRepository;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 public class UserControllerTest {
 
     private static final String URL = "/api/register";
+    private static final String LOGIN_URL = "/api/login";
     private static final String FIRST_NAME = "John";
     private static final String LAST_NAME = "Doe";
     private static final String LOGIN = "login";
@@ -115,5 +117,62 @@ public class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(MockMvcResultMatchers.status().isCreated());
+    }
+
+    // ---------- /api/login (plan de tests : B-IT-USR-01 à 03) ----------
+
+    @Test
+    public void loginSuccessfulReturnsToken() throws Exception {
+        // GIVEN : agent inscrit (mot de passe haché en base par le service)
+        registerUser();
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setLogin(LOGIN);
+        loginRequestDTO.setPassword(PASSWORD);
+
+        // WHEN / THEN : 200 et un JWT dans le champ « token »
+        mockMvc.perform(MockMvcRequestBuilders.post(LOGIN_URL)
+                        .content(objectMapper.writeValueAsString(loginRequestDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    public void loginWithWrongPasswordReturnsBadRequest() throws Exception {
+        // GIVEN
+        registerUser();
+        LoginRequestDTO loginRequestDTO = new LoginRequestDTO();
+        loginRequestDTO.setLogin(LOGIN);
+        loginRequestDTO.setPassword("wrong-password");
+
+        // WHEN / THEN
+        mockMvc.perform(MockMvcRequestBuilders.post(LOGIN_URL)
+                        .content(objectMapper.writeValueAsString(loginRequestDTO))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Invalid credentials"));
+    }
+
+    @Test
+    public void loginWithoutRequiredDataReturnsBadRequest() throws Exception {
+        // WHEN / THEN : @Valid rejette la requête avant le service
+        mockMvc.perform(MockMvcRequestBuilders.post(LOGIN_URL)
+                        .content(objectMapper.writeValueAsString(new LoginRequestDTO()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("login")));
+    }
+
+    private void registerUser() {
+        User user = new User();
+        user.setFirstName(FIRST_NAME);
+        user.setLastName(LAST_NAME);
+        user.setLogin(LOGIN);
+        user.setPassword(PASSWORD);
+        userService.register(user);
     }
 }
