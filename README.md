@@ -117,15 +117,16 @@ mvn clean test
 
 ## Fonctionnalités portées
 
-    - API de création d'un utilisateur (agent de la bibliothèque)
-    - API d'authentification d'un utilisateur (à faire)
-    - APIs CRUD des étudiants de la bibliothèque (à faire)
+    - API de création d'un utilisateur (agent de la bibliothèque) : POST /api/register
+    - API d'authentification d'un utilisateur, qui retourne un token JWT : POST /api/login
+    - APIs CRUD des étudiants de la bibliothèque, sécurisées par token Bearer : /api/students
 
+Une collection Postman couvrant toutes les routes est disponible dans [`postman/`](postman/EtuBibliotheque.postman_collection.json).
 
 ## Écrans ou blocs concernés
-    - Ecran xxx
-    - Ecran xxx
-    - Ecran xxx
+    - Inscription d'un agent (/register)
+    - Connexion (/login)
+    - Gestion des étudiants : liste, détail, ajout, modification (/students)
 
 
 
