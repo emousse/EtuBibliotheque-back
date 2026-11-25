@@ -115,6 +115,18 @@ Pour exécuter les tests Junit, il faut :
 mvn clean test
 ```
 
+### Couverture de code
+
+Le rapport JaCoCo est généré dans `target/site/jacoco/index.html`. Pour vérifier en plus le seuil minimal de 80 % de lignes couvertes (le build échoue en dessous) :
+
+```
+mvn clean verify
+```
+
+Résultat actuel : 43 tests (unitaires et d'intégration), **92 % des lignes couvertes**.
+
+![3-couverture-jacoco](pictures/3-couverture-jacoco.png)
+
 ## Fonctionnalités portées
 
     - API de création d'un utilisateur (agent de la bibliothèque) : POST /api/register
